@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { jsPDF } from "jspdf";
+import 'jspdf-autotable';
 
 const InstagramReelTemplate = () => {
   const [reelData, setReelData] = useState({
@@ -20,17 +22,40 @@ const InstagramReelTemplate = () => {
   };
 
   const handleSave = () => {
-    const content = Object.entries(reelData)
-      .map(([key, value]) => `${key.toUpperCase()}:\n${value}\n\n`)
-      .join('');
+    const doc = new jsPDF();
     
-    const blob = new Blob([content], { type: 'text/plain' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'instagram_reel_script.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    // Set font styles
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    
+    // Add title
+    doc.text("Instagram Reel Script", 105, 15, null, null, "center");
+    
+    // Add content
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    
+    let yPos = 30;
+    Object.entries(reelData).forEach(([key, value]) => {
+      doc.setFont("helvetica", "bold");
+      doc.text(key.toUpperCase() + ":", 10, yPos);
+      doc.setFont("helvetica", "normal");
+      const splitText = doc.splitTextToSize(value, 180);
+      doc.text(splitText, 10, yPos + 7);
+      yPos += 10 + (splitText.length * 7);
+      
+      // Add some spacing between sections
+      yPos += 5;
+      
+      // Start a new page if we're running out of space
+      if (yPos > 280) {
+        doc.addPage();
+        yPos = 20;
+      }
+    });
+    
+    // Save the PDF
+    doc.save("instagram_reel_script.pdf");
   };
 
   return (
@@ -108,7 +133,7 @@ const InstagramReelTemplate = () => {
           />
         </div>
         <button type="button" onClick={handleSave} style={{width: '100%', padding: '10px', backgroundColor: '#3498db', color: 'white', border: 'none', cursor: 'pointer'}}>
-          Download Reel Script
+          Download Reel Script as PDF
         </button>
       </form>
     </div>
